@@ -157,6 +157,22 @@ tensor_handle_t* create_tensor(int dims, int*shape){
 	return handle;
 }
 
+tensor_handle_t* tensor_from_file(char* filename){
+	// reads the raw float32 data from the filename and returns a flat array.
+	FILE *file;
+	file = fopen(filename, "rb");
+	fseek(file, 0, SEEK_END); // seek to end of file
+	int file_size = ftell(file); // get current file pointer
+	fseek(file, 0, SEEK_SET); // seek to the begining
+	int elements = file_size / sizeof(float);
+	if(file_size != elements * sizeof(float)){
+		printf("WARNING: File \"%s\" size(%d) is not even devisable by %lu. Is this raw float32 data?", filename, file_size, sizeof(float));
+	}
+	tensor_handle_t* handle = create_tensor(1, (int[]){elements});	
+	fread(handle->data, sizeof(float), elements, file);
+	return handle;	
+}
+
 void free_tensor(tensor_handle_t** handle){
 	if(*handle == NULL){
 		printf("WARNING: trying to free NULL handle\n");

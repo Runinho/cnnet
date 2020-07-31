@@ -267,6 +267,12 @@ void test_loss(){
 	expect_f(error->data[3], 0.09, "test squared loss");
 }
 
+void test_file_read(){
+	tensor_handle_t* data = tensor_from_file("points.raw");
+	tensor_reshape(data, 2, (int[]){1000, 2});
+	print_tensor(data); 
+}
+
 int main(){
 	test_equal();
 	test_creation();
@@ -278,6 +284,7 @@ int main(){
 	test_layer();
 	test_transpose();
 	test_loss();
+	test_file_read();
 
 	printf("%d tests. %d failed.\n", tests, failed);
 }
