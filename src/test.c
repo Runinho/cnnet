@@ -409,7 +409,7 @@ void test_model_run_relu(){
 	//print_tensor(y);
 
 	int epochs = 10;
-	float* history = train(model, input, y, epochs, 0.01);
+	float* history = train(model, input, y, epochs, 0.03);
 	
 	// check if the loss is decreasing and therefore
 	// the model is converging
@@ -419,8 +419,8 @@ void test_model_run_relu(){
 	
 	// print last prediction:
 	tensor_handle_t* output = predict(model, input);
-	//printf("model_output");
-	//print_tensor(output);
+	printf("model_output");
+	print_tensor(output);
 	
 	free_tensor(&output);
 	free_tensor(&input);
@@ -430,7 +430,6 @@ void test_model_run_relu(){
 } 
 
 int main(){
-	/*
 	test_equal();
 	test_creation();
 	test_add();
@@ -443,7 +442,6 @@ int main(){
 	test_loss();
 	//test_file_read();
 	test_model_add();
-	*/
 	test_model_run();
 	test_model_run_relu();
 

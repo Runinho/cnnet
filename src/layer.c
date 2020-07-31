@@ -47,10 +47,18 @@ layer_t* create_layer(int num_inputs, int outputs, Activation activation){
 		return NULL;
 	}
 	int weights_shape[2] = {num_inputs, outputs};
-	handle->weights = tensor_random_range(2, weights_shape, -0.5, 0.5);
+	
+	// TODO: research weights initialization
+	float start_weights = -0.5;
+	float stop_weights = 0.5;
+	if(activation == relu){
+		start_weights = 0;
+		stop_weights = 1;
+	}
+	handle->weights = tensor_random_range(2, weights_shape, start_weights, stop_weights);
 
 	int bias_shape[2] = {1, outputs};
-	handle->bias = tensor_random_range(2, bias_shape, -0.5, 0.5);	
+	handle->bias = tensor_random_range(2, bias_shape, start_weights, stop_weights);	
 	handle->last_pre_sigmoid = NULL;
 	handle->last_input = NULL;
 	handle->activation = activation;
