@@ -41,5 +41,7 @@ tensor_handle_t* tensor_elm_multiply(tensor_handle_t* a, tensor_handle_t* b);
 float tensor_sum(tensor_handle_t* handle);
 void tensor_sigmoid(tensor_handle_t* handle);
 void tensor_sigmoid_derivative(tensor_handle_t* handle);
+void tensor_relu(tensor_handle_t* a);
+void tensor_relu_derivative(tensor_handle_t* a);
 
 #endif /* TENSOR_H */

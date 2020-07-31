@@ -323,7 +323,7 @@ tensor_handle_t* tensor_random_range(int dims, int* shape, float start, float st
 	int size = get_tensor_size(res);
 	float divide = 1.0/2147483647; //devided by (2**31)-1
 	divide *= (stop-start);
-	printf("divide by: %f/n", divide);
+	//printf("divide by: %f\n", divide);
 	for(int i=0; i < size; i++){
 		res->data[i] = ((float)random()) * divide + start;
 	}
@@ -504,6 +504,7 @@ tensor_handle_t* tensor_elm_multiply(tensor_handle_t* a, tensor_handle_t* b){
 	return res;
 }	
 
+//activation functions
 void tensor_sigmoid(tensor_handle_t* handle){
 	// we use the following sigmoid function: f(x)= x/(1 + abs(x))
 	int size = get_tensor_size(handle);
@@ -527,6 +528,27 @@ void tensor_sigmoid_derivative(tensor_handle_t* handle){
 		float v_tick = (x < 0 ? -1 : 1); // not 100% correct abs(0) = 0....
 		x = (v - v_tick * x)/(v * v);
 		handle->data[i] = x;
+	}
+}
+
+void tensor_relu(tensor_handle_t* a){
+	int size = get_tensor_size(a);
+	for(int i=0; i < size; i++){
+		if(a->data[i]<=0){
+			a->data[i] = 0;
+		}
+	}
+}
+
+
+void tensor_relu_derivative(tensor_handle_t* a){
+	int size = get_tensor_size(a);
+	for(int i=0; i < size; i++){
+		if(a->data[i]<=0){
+			a->data[i] = 0;
+		} else {
+			a->data[i] = 1;
+		}
 	}
 }
 

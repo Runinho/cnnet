@@ -1,7 +1,9 @@
-// small tests for the framwork
+//small tests for the framwork
 #include "tensor.h"
 #include "layer.h"
+#include "model.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 //typedef int (*test_f)();
 
@@ -12,6 +14,16 @@ void expect_f(float actual, float expect, char* s){
 	tests++;
 	if(actual < expect - 0.00001 ||actual > expect + 0.00001){
 		printf("❗️TEST FAILED. %s: expected %f to be %f\n", s, actual, expect);
+		failed++;
+	} else {
+		printf("✅ %s\n", s);
+	}
+}
+
+void expect_less_f(float actual, float less, char*s){
+	tests++;
+	if(actual >= less){
+		printf("❗️TEST FAILED. %s: expected %f to be smaller than %f\n", s, actual, less);
 		failed++;
 	} else {
 		printf("✅ %s\n", s);
@@ -161,9 +173,8 @@ void test_layer(){
 	tensor_handle_t* lol = tensor_random(1,(int[]){10});
 	free_tensor(&lol);
 	
-	layer_t* layer1 = create_layer(2, 8);
-	layer_t* layer2 = create_layer(8, 1);
-	/*
+	layer_t* layer1 = create_layer(2, 8, sigmoid);
+	layer_t* layer2 = create_layer(8, 1, sigmoid);
 	tensor_handle_t* input = tensor_arange(0,8,1); 
 	tensor_reshape(input, 2, (int[]){4, 2});
 	input->data[0] = 1;
@@ -177,8 +188,8 @@ void test_layer(){
 
 	input->data[6] = -1;
 	input->data[7] = 1;
-	printf("input:\n");
-	print_tensor(input);
+	//printf("input:\n");
+	//print_tensor(input);
 	
 	tensor_handle_t* y = create_tensor(2, (int[]) {4, 1});
 	y->data[0] = -1;
@@ -186,26 +197,29 @@ void test_layer(){
 	y->data[2] = -1;
 	y->data[3] = 1;
 
-	printf("y:\n");
-	print_tensor(y);
-	*/
+	//printf("y:\n");
+	//print_tensor(y);
 
 	// read data from files
-
+	/*
 	tensor_handle_t* input = tensor_from_file("points.raw");
 	tensor_reshape(input, 2, (int[]){1000, 2});
 	
 	tensor_handle_t* y = tensor_from_file("classes.raw");
 	tensor_reshape(y, 2, (int[]){1000, 1});
-	
-	int num_epochs = 1000;
+	*/	
+	int num_epochs = 10;
+	int batch_size = y->shape[0];
+	float last_error = 999999;
 	for(int epoch=0; epoch < num_epochs; epoch++){	
+		/*
 		printf("weights1:\n");
 		print_tensor(layer1->weights);
 		print_tensor(layer1->bias);
 		printf("weights2:\n");
 		print_tensor(layer2->weights);
 		print_tensor(layer2->bias);
+		*/
 		
 		tensor_handle_t* output1 = forward_pass(layer1, input);
 		tensor_handle_t* output = forward_pass(layer2, output1);
@@ -213,14 +227,17 @@ void test_layer(){
 		//print_tensor(output);
 		
 		tensor_handle_t* error = squared_loss(output, y);
-		printf("output:\n");
+		/*printf("output:\n");
 		print_tensor(output);
 		printf("error:\n");
 		print_tensor(error);
+		*/
 		float sum_error = tensor_sum(error);
-		printf("loss: %f\n", sum_error/1000);
+		sum_error = sum_error/batch_size;
+		printf("loss: %f ", sum_error);
+		expect_less_f(sum_error, last_error, "test convergance");
 		tensor_handle_t* error_deriv = squared_loss_derivative(output, y);
-		float learning_rate = 0.001;
+		float learning_rate = 0.01;
 		tensor_handle_t* error1 = backward_pass(layer2, error_deriv, learning_rate);
 		tensor_handle_t* error0 = backward_pass(layer1, error1, learning_rate);
 	
@@ -232,8 +249,8 @@ void test_layer(){
 		free_tensor(&error0);
 		free_tensor(&output1);
 		if(epoch == num_epochs -1){
-			printf("model_out:\n");
-			print_tensor(output);
+			//printf("model_out:\n");
+			//print_tensor(output);
 			tensor_to_file(output, "out.raw");
 		}	
 		free_tensor(&output);
@@ -246,10 +263,12 @@ void test_layer(){
 void test_transpose(){
 	tensor_handle_t* test = tensor_arange(0, 12, 1);
 	tensor_reshape(test, 2, (int[]){3, 4});
-	print_tensor(test);
+	//print_tensor(test);
 	tensor_transpose(test);
-	print_tensor(test);
+	//print_tensor(test);
 	// do actuall testing of some sorts. espacially the get_element function
+	expect_f(tensor_get(test, (int[]){1, 0}), 1, "transpose position [1, 0]");
+	expect_f(tensor_get(test, (int[]){0, 1}), 4, "transpose position [0, 1]");
 	free_tensor(&test);
 }
 
@@ -257,14 +276,14 @@ void test_loss(){
 	// no error
 	tensor_handle_t* output = tensor_arange(0, 10, 1);
 	tensor_reshape(output, 2, (int[]){5, 2});
-	printf("output:\n");
-	print_tensor(output);
+	//printf("output:\n");
+	//print_tensor(output);
 	tensor_handle_t* expected = tensor_copy(output);
-	printf("expected:\n");
-	print_tensor(expected);
+	//printf("expected:\n");
+	//print_tensor(expected);
 	tensor_handle_t* error = squared_loss(output, expected);
-	printf("error:\n");
-	print_tensor(error);
+	//printf("error:\n");
+	//print_tensor(error);
 	tensor_handle_t* zeros = create_tensor(2, error->shape);
 	tensor_multiply(zeros, 0);
 	expect(tensor_equal(error, zeros), 1, "expected error to be all zeros");
@@ -273,10 +292,13 @@ void test_loss(){
 	expected->data[0] = 0.25;
 	expected->data[3] = 3.3;
 	error = squared_loss(output, expected);
-	printf("error2:\n");
-	print_tensor(error);
+	//printf("error2:\n");
+	//print_tensor(error);
 	expect_f(error->data[0], 0.0625, "test squared loss");
 	expect_f(error->data[3], 0.09, "test squared loss");
+	free_tensor(&error);
+	free_tensor(&output);
+	free_tensor(&expected);
 }
 
 void test_file_read(){
@@ -285,7 +307,130 @@ void test_file_read(){
 	print_tensor(data); 
 }
 
+void test_model_add(){
+	printf("Create Model...\n");
+	model_t* model = create_model(sigmoid);
+	
+	add_layer(model, create_layer(2, 5, sigmoid));
+	add_layer(model, create_layer(5, 5, sigmoid));
+	add_layer(model, create_layer(5, 1, sigmoid));
+	
+	print_model(model);
+	expect(model->first_layer->layer->weights->shape[0], 2, "model add shape");
+	expect(model->first_layer->layer->weights->shape[1], 5, "model add shape");
+	
+	expect(model->first_layer->next_layer->layer->weights->shape[0], 5, "model add shape");
+	expect(model->first_layer->next_layer->layer->weights->shape[1], 5, "model add shape");
+
+	expect(model->first_layer->next_layer->next_layer->layer->weights->shape[0], 5, "model add shape");
+	expect(model->first_layer->next_layer->next_layer->layer->weights->shape[1], 1, "model add shape");
+	expect(model->first_layer->next_layer->next_layer->is_last, 1, "model last");
+	
+	free_model(&model);
+}
+
+void test_model_run(){
+	// create model
+	model_t* model = create_model(sigmoid);
+	
+	add_layer(model, create_layer(2, 5, sigmoid));
+	add_layer(model, create_layer(5, 1, sigmoid));
+	
+	// create test data
+	tensor_handle_t* input = tensor_arange(0,8,1); 
+	tensor_reshape(input, 2, (int[]){4, 2});
+	input->data[0] = 1;
+	input->data[1] = 1;
+
+	input->data[2] = 1;
+	input->data[3] = -1;
+
+	input->data[4] = -1;
+	input->data[5] = -1;
+
+	input->data[6] = -1;
+	input->data[7] = 1;
+	//printf("input:\n");
+	//print_tensor(input);
+	
+	tensor_handle_t* y = create_tensor(2, (int[]) {4, 1});
+	y->data[0] = -1;
+	y->data[1] = 1;
+	y->data[2] = -1;
+	y->data[3] = 1;
+	//printf("y:\n");
+	//print_tensor(y);
+
+	int epochs = 10;
+	float* history = train(model, input, y, epochs, 0.01);
+	
+	// check if the loss is decreasing and therefore
+	// the model is converging
+	for(int epoch=0; epoch < epochs-1; epoch++){
+		expect_less_f(history[epoch + 1], history[epoch], "loss is decresing model training");
+	}
+	free_tensor(&input);
+	free_tensor(&y);
+	free_model(&model);
+	free(history);
+}
+
+void test_model_run_relu(){
+	// create model
+	model_t* model = create_model(sigmoid);
+
+	Activation activation = relu;	
+	add_layer(model, create_layer(2, 5, activation));
+	add_layer(model, create_layer(5, 1, activation));
+	
+	// create test data
+	tensor_handle_t* input = tensor_arange(0,8,1); 
+	tensor_reshape(input, 2, (int[]){4, 2});
+	input->data[0] = 1;
+	input->data[1] = 1;
+
+	input->data[2] = 1;
+	input->data[3] = -1;
+
+	input->data[4] = -1;
+	input->data[5] = -1;
+
+	input->data[6] = -1;
+	input->data[7] = 1;
+	//printf("input:\n");
+	//print_tensor(input);
+	
+	tensor_handle_t* y = create_tensor(2, (int[]) {4, 1});
+	y->data[0] = 0;
+	y->data[1] = 1;
+	y->data[2] = 0;
+	y->data[3] = 1;
+	//printf("y:\n");
+	//print_tensor(y);
+
+	int epochs = 10;
+	float* history = train(model, input, y, epochs, 0.01);
+	
+	// check if the loss is decreasing and therefore
+	// the model is converging
+	for(int epoch=0; epoch < epochs-1; epoch++){
+		expect_less_f(history[epoch + 1], history[epoch], "loss is decresing model training (relu)");
+	}
+	
+	// print last prediction:
+	tensor_handle_t* output = predict(model, input);
+	//printf("model_output");
+	//print_tensor(output);
+	
+	free_tensor(&output);
+	free_tensor(&input);
+	free_tensor(&y);
+	free_model(&model);
+	free(history);
+} 
+
 int main(){
+	/*
 	test_equal();
 	test_creation();
 	test_add();
@@ -296,7 +441,11 @@ int main(){
 	test_layer();
 	test_transpose();
 	test_loss();
-	test_file_read();
+	//test_file_read();
+	test_model_add();
+	*/
+	test_model_run();
+	test_model_run_relu();
 
 	printf("%d tests. %d failed.\n", tests, failed);
 }

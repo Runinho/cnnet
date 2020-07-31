@@ -1,6 +1,6 @@
 IDIR =../include
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -g
 
 ODIR=obj
 LDIR =../lib
@@ -19,6 +19,10 @@ $(ODIR)/%.o: %.c $(DEPS)
 
 test: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+
+.PHONY: run_test
+run_test: test
+	./test
 
 .PHONY: clean
 
