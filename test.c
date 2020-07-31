@@ -163,6 +163,7 @@ void test_layer(){
 	
 	layer_t* layer1 = create_layer(2, 8);
 	layer_t* layer2 = create_layer(8, 1);
+	/*
 	tensor_handle_t* input = tensor_arange(0,8,1); 
 	tensor_reshape(input, 2, (int[]){4, 2});
 	input->data[0] = 1;
@@ -187,7 +188,17 @@ void test_layer(){
 
 	printf("y:\n");
 	print_tensor(y);
-	int num_epochs = 100;
+	*/
+
+	// read data from files
+
+	tensor_handle_t* input = tensor_from_file("points.raw");
+	tensor_reshape(input, 2, (int[]){1000, 2});
+	
+	tensor_handle_t* y = tensor_from_file("classes.raw");
+	tensor_reshape(y, 2, (int[]){1000, 1});
+	
+	int num_epochs = 1000;
 	for(int epoch=0; epoch < num_epochs; epoch++){	
 		printf("weights1:\n");
 		print_tensor(layer1->weights);
@@ -207,9 +218,9 @@ void test_layer(){
 		printf("error:\n");
 		print_tensor(error);
 		float sum_error = tensor_sum(error);
-		printf("loss: %f\n", sum_error);
+		printf("loss: %f\n", sum_error/1000);
 		tensor_handle_t* error_deriv = squared_loss_derivative(output, y);
-		float learning_rate = 0.1;
+		float learning_rate = 0.001;
 		tensor_handle_t* error1 = backward_pass(layer2, error_deriv, learning_rate);
 		tensor_handle_t* error0 = backward_pass(layer1, error1, learning_rate);
 	
@@ -223,6 +234,7 @@ void test_layer(){
 		if(epoch == num_epochs -1){
 			printf("model_out:\n");
 			print_tensor(output);
+			tensor_to_file(output, "out.raw");
 		}	
 		free_tensor(&output);
 	}

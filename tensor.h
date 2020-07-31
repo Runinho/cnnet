@@ -17,6 +17,7 @@ tensor_handle_t* tensor_arange(float start, float stop, float step);
 tensor_handle_t* tensor_random(int dims, int* shape);
 tensor_handle_t* tensor_random_range(int dims, int* shape, float start, float stop);
 tensor_handle_t* tensor_from_file(char* filename);
+void tensor_to_file(tensor_handle_t* handle, char* filename);
 tensor_handle_t* tensor_copy(tensor_handle_t* handle);
 int tensor_equal(tensor_handle_t* a, tensor_handle_t* b);
 int get_tensor_size(tensor_handle_t* handle);

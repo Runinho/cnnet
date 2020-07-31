@@ -173,6 +173,14 @@ tensor_handle_t* tensor_from_file(char* filename){
 	return handle;	
 }
 
+void tensor_to_file(tensor_handle_t* handle, char* filename){
+	FILE *file;
+	file = fopen(filename, "wb");
+	int size = get_tensor_size(handle);
+	fwrite(handle->data, sizeof(float), size, file);
+	printf("wrote tensor to %s\n", filename);
+}
+
 void free_tensor(tensor_handle_t** handle){
 	if(*handle == NULL){
 		printf("WARNING: trying to free NULL handle\n");
