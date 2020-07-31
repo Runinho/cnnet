@@ -152,7 +152,7 @@ tensor_handle_t* create_tensor(int dims, int*shape){
 
 	handle->data = data;	
 	
-	printf("created Tensor at %p\n", handle);
+	//printf("created Tensor at %p\n", handle);
 		
 	return handle;
 }

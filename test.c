@@ -158,11 +158,11 @@ void test_elm_add(){
 
 void test_layer(){
 	//alter randmon sate
-	//tensor_handle_t* lol = tensor_random(1,(int[]){10});
-	//free_tensor(&lol);
+	tensor_handle_t* lol = tensor_random(1,(int[]){10});
+	free_tensor(&lol);
 	
-	layer_t* layer1 = create_layer(2, 5);
-	layer_t* layer2 = create_layer(5, 1);
+	layer_t* layer1 = create_layer(2, 8);
+	layer_t* layer2 = create_layer(8, 1);
 	tensor_handle_t* input = tensor_arange(0,8,1); 
 	tensor_reshape(input, 2, (int[]){4, 2});
 	input->data[0] = 1;
@@ -180,32 +180,50 @@ void test_layer(){
 	print_tensor(input);
 	
 	tensor_handle_t* y = create_tensor(2, (int[]) {4, 1});
-	y->data[0] = 0;
+	y->data[0] = -1;
 	y->data[1] = 1;
-	y->data[2] = 0;
+	y->data[2] = -1;
 	y->data[3] = 1;
 
 	printf("y:\n");
-	print_tensor(input);
-	for(int epoch=0; epoch < 10; epoch++){	
+	print_tensor(y);
+	int num_epochs = 100;
+	for(int epoch=0; epoch < num_epochs; epoch++){	
+		printf("weights1:\n");
+		print_tensor(layer1->weights);
+		print_tensor(layer1->bias);
+		printf("weights2:\n");
+		print_tensor(layer2->weights);
+		print_tensor(layer2->bias);
+		
 		tensor_handle_t* output1 = forward_pass(layer1, input);
 		tensor_handle_t* output = forward_pass(layer2, output1);
-		print_tensor(output1);
-		print_tensor(output);
+		//print_tensor(output1);
+		//print_tensor(output);
 		
 		tensor_handle_t* error = squared_loss(output, y);
+		printf("output:\n");
+		print_tensor(output);
+		printf("error:\n");
+		print_tensor(error);
 		float sum_error = tensor_sum(error);
-		printf("loss: %f", sum_error);
-		float learning_rate = 0.01;
-		tensor_handle_t* error1 = backward_pass(layer2, error, learning_rate);
+		printf("loss: %f\n", sum_error);
+		tensor_handle_t* error_deriv = squared_loss_derivative(output, y);
+		float learning_rate = 0.1;
+		tensor_handle_t* error1 = backward_pass(layer2, error_deriv, learning_rate);
 		tensor_handle_t* error0 = backward_pass(layer1, error1, learning_rate);
 	
-		printf("Done backward :)) \n\n\n\n");	
+		//printf("Done backward :)) \n\n\n\n");	
 
 		free_tensor(&error);
+		free_tensor(&error_deriv);
 		free_tensor(&error1);
 		free_tensor(&error0);
 		free_tensor(&output1);
+		if(epoch == num_epochs -1){
+			printf("model_out:\n");
+			print_tensor(output);
+		}	
 		free_tensor(&output);
 	}
 	free_layer(&layer1);

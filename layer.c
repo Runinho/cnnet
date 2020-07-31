@@ -7,8 +7,20 @@
 void relu(tensor_handle_t* a){
 	int size = get_tensor_size(a);
 	for(int i=0; i < size; i++){
-		if(a->data[i]<0){
+		if(a->data[i]<=0){
 			a->data[i] = 0;
+		}
+	}
+}
+
+
+void relu_derivative(tensor_handle_t* a){
+	int size = get_tensor_size(a);
+	for(int i=0; i < size; i++){
+		if(a->data[i]<=0){
+			a->data[i] = 0;
+		} else {
+			a->data[i] = 1;
 		}
 	}
 }
@@ -23,6 +35,13 @@ tensor_handle_t* squared_loss(tensor_handle_t* output, tensor_handle_t* y){
 	return ret;
 }
 
+tensor_handle_t* squared_loss_derivative(tensor_handle_t* output, tensor_handle_t* y){
+	tensor_handle_t* error = tensor_copy(y);
+	tensor_multiply(error, -1);
+	tensor_elm_add(error, output);
+	return error;
+}
+
 layer_t* create_layer(int num_inputs, int outputs){
 	//TODO: do random intialization
 	//create new layer:
@@ -32,10 +51,10 @@ layer_t* create_layer(int num_inputs, int outputs){
 		return NULL;
 	}
 	int weights_shape[2] = {num_inputs, outputs};
-	handle->weights = tensor_random_range(2, weights_shape, -1, 1);
+	handle->weights = tensor_random_range(2, weights_shape, -0.5, 0.5);
 
 	int bias_shape[2] = {1, outputs};
-	handle->bias = tensor_random_range(2, bias_shape, -1, 1);	
+	handle->bias = tensor_random_range(2, bias_shape, -0.5, 0.5);	
 	handle->last_pre_sigmoid = NULL;
 	handle->last_input = NULL;
 	return handle;
@@ -70,6 +89,7 @@ tensor_handle_t* forward_pass(layer_t* layer, tensor_handle_t* input){
 	
 	// activation function
 	// TODO: implement other activation functions
+	//relu(res);
 	tensor_sigmoid(res);
 	return res;
 }
@@ -88,6 +108,7 @@ tensor_handle_t* backward_pass(layer_t* layer, tensor_handle_t* error, float lea
 	
 	// calculate grad: error * sigmoid'(layer_pre_sigmoid)
 	// apply derivative of sigmoid
+	//relu_derivative(layer->last_pre_sigmoid);
 	tensor_sigmoid_derivative(layer->last_pre_sigmoid);
 	tensor_handle_t* delta = tensor_elm_multiply(layer->last_pre_sigmoid, error);
 	

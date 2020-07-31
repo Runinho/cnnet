@@ -11,6 +11,7 @@ typedef struct layer{
 } layer_t;
 
 tensor_handle_t* squared_loss(tensor_handle_t* output, tensor_handle_t* y);
+tensor_handle_t* squared_loss_derivative(tensor_handle_t* output, tensor_handle_t* y);
 
 layer_t* create_layer(int num_inputs, int outputs);
 void free_layer(layer_t** handle);
