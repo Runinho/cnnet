@@ -4,6 +4,7 @@
 #include "model.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 //typedef int (*test_f)();
 
@@ -309,7 +310,7 @@ void test_file_read(){
 
 void test_model_add(){
 	printf("Create Model...\n");
-	model_t* model = create_model(sigmoid);
+	model_t* model = create_model();
 	
 	add_layer(model, create_layer(2, 5, sigmoid));
 	add_layer(model, create_layer(5, 5, sigmoid));
@@ -331,7 +332,7 @@ void test_model_add(){
 
 void test_model_run(){
 	// create model
-	model_t* model = create_model(sigmoid);
+	model_t* model = create_model();
 	
 	add_layer(model, create_layer(2, 5, sigmoid));
 	add_layer(model, create_layer(5, 1, sigmoid));
@@ -377,7 +378,7 @@ void test_model_run(){
 
 void test_model_run_relu(){
 	// create model
-	model_t* model = create_model(sigmoid);
+	model_t* model = create_model();
 
 	Activation activation = relu;	
 	add_layer(model, create_layer(2, 5, activation));
@@ -429,6 +430,47 @@ void test_model_run_relu(){
 	free(history);
 } 
 
+void test_benchmark_matrix_mult(){
+	// create both matrixes
+	tensor_handle_t* a = tensor_arange(0, 1000, 1);
+	tensor_handle_t* b = tensor_arange(0, 1000, 1);
+	tensor_reshape(a, 2, (int[]) {100, 10});
+	tensor_reshape(b, 2, (int[]) {10, 100});
+	
+	for(int i=0; i < 20; i++){	
+		clock_t begin = clock();
+		tensor_handle_t* c = tensor_mat_multiply(a, b);
+		clock_t end = clock();
+		
+		free_tensor(&c);	
+		double time_spent = (double)(end - begin);
+		printf("Time spent for matrix multiplication: %fms\n", time_spent);
+	}
+	free_tensor(&a);	
+	free_tensor(&b);	
+}
+
+void test_model_save(){
+	model_t* model= sequential(4, (int[]){3, 10, 13, 1}, sigmoid);
+	save_weights(model, "test_model");
+	
+	model_t* model2= sequential(4, (int[]){3, 10, 13, 1}, sigmoid);
+	expect(tensor_equal(model->first_layer->layer->weights, model2->first_layer->layer->weights), 0, "not equal before loading");
+	int load_res = load_weights(model2, "test_model");
+
+	expect(load_res, 0, "succesfull loading of weights");
+	expect(tensor_equal(model->first_layer->layer->weights, model2->first_layer->layer->weights), 1, "equal after loading");
+
+	free_model(&model);
+	free_model(&model2);
+}
+
+void test_failed_model_load(){
+	model_t* model= sequential(4, (int[]){3, 10, 13, 1}, sigmoid);
+	int load_res = load_weights(model, "lalilu_random_dir_name");
+	expect(load_res, -1, "unsuccesfull loading of weights");	
+}
+
 int main(){
 	test_equal();
 	test_creation();
@@ -444,6 +486,8 @@ int main(){
 	test_model_add();
 	test_model_run();
 	test_model_run_relu();
-
+	test_benchmark_matrix_mult();
+	test_model_save();
+	test_failed_model_load();
 	printf("%d tests. %d failed.\n", tests, failed);
 }

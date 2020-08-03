@@ -170,6 +170,7 @@ tensor_handle_t* tensor_from_file(char* filename){
 	}
 	tensor_handle_t* handle = create_tensor(1, (int[]){elements});	
 	fread(handle->data, sizeof(float), elements, file);
+	fclose(file);
 	return handle;	
 }
 
@@ -179,6 +180,7 @@ void tensor_to_file(tensor_handle_t* handle, char* filename){
 	int size = get_tensor_size(handle);
 	fwrite(handle->data, sizeof(float), size, file);
 	printf("wrote tensor to %s\n", filename);
+	fclose(file);
 }
 
 void free_tensor(tensor_handle_t** handle){
@@ -453,6 +455,7 @@ tensor_handle_t* tensor_mat_multiply(tensor_handle_t* a, tensor_handle_t* b){
 			
 			position_a[0] = i;
 			position_b[1] = j;
+			#pragma clang loop vectorize(enable)
 			for(int sum_i=0; sum_i < a->shape[1]; sum_i++){
 				position_a[1] = sum_i;
 				position_b[0] = sum_i;
@@ -472,6 +475,8 @@ tensor_handle_t* tensor_mat_multiply(tensor_handle_t* a, tensor_handle_t* b){
 float tensor_sum(tensor_handle_t* handle){
 	float sum = 0;
 	int size = get_tensor_size(handle);
+	
+	#pragma clang loop vectorize(enable)
 	for(int i=0; i < size; i++){
 		sum += handle->data[i];
 	}
